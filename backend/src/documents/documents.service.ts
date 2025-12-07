@@ -66,4 +66,27 @@ export class DocumentsService {
     }
     return uploadsRoot;
   }
+
+    async listDocuments(params: { limit?: number; offset?: number; userId?: string | null } = {}) {
+    const { limit = 20, offset = 0, userId = null } = params;
+    const where = userId ? { userId } : {};
+    const docs = await this.prisma.prisma.document.findMany({
+      where,
+      orderBy: { createdAt: 'desc' },
+      skip: offset,
+      take: limit,
+      include: { ocrResult: true },
+    });
+    const total = await this.prisma.prisma.document.count({ where });
+    return { items: docs, total, limit, offset };
+  }
+
+    async getDocumentById(id: string) {
+      const doc = await this.prisma.prisma.document.findUnique({
+        where: { id },
+        include: { ocrResult: true },
+      });
+      return doc;
+    }
+
 }
