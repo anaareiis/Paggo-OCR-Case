@@ -1,0 +1,24 @@
+// backend/src/ocr/ocr.controller.ts
+import { Controller, Post, Param, UseGuards } from '@nestjs/common';
+import { OcrService } from './ocr.service';
+import { MockUserGuard } from '../auth/auth.guard';
+import { CurrentUserId } from '../auth/auth.decorator';
+
+@Controller('documents')
+export class OcrController {
+  constructor(private readonly ocr: OcrService) {}
+
+  // Require mock auth so only owner can trigger. The controller will check ownership in the service or we can require userId check.
+  @UseGuards(MockUserGuard)
+  @Post(':id/ocr')
+  async runOcr(@Param('id') id: string, @CurrentUserId() userId?: string) {
+    // optional extra: check document owner before running OCR
+    // We'll rely on service to throw if not found, and service will update OCRResult by documentId.
+    // But better to check ownership:
+    const doc = await this.ocr['prisma'].prisma.document.findUnique({ where: { id } });
+    if (!doc) throw new Error('Document not found');
+    if (doc.userId !== userId) throw new Error('Not allowed to run OCR on this document');
+
+    return await this.ocr.runOcrForDocument(id);
+  }
+}
