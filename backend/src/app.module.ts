@@ -1,9 +1,11 @@
+// backend/src/app.module.ts
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { DatabaseModule } from './prisma.module';
 
 @Module({
-  imports: [],
+  imports: [DatabaseModule],
   controllers: [AppController],
   providers: [AppService],
 })
