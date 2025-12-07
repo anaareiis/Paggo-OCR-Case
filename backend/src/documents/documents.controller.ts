@@ -13,6 +13,8 @@ import {
   Param,
   NotFoundException,
   UseGuards,
+  Res,
+  ForbiddenException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -21,6 +23,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { DocumentsService } from './documents.service';
 import { MockUserGuard } from '../auth/auth.guard';
 import { CurrentUserId } from '../auth/auth.decorator';
+import * as fs from 'fs';
+import * as path from 'path';
+import archiver from 'archiver';
+import type { Response } from 'express';
 
 const ALLOWED_MIMES = [
   'image/jpeg',
@@ -90,9 +96,10 @@ export class DocumentsController {
     };
   }
 
-  // ---- Protected endpoints: require x-user-id header ----
-  @UseGuards(MockUserGuard)
+  // ---- Protected endpoints: require x-user-id header (MockUserGuard) ----
+
   @Get()
+  @UseGuards(MockUserGuard)
   async list(
     @Query('limit') limit = '20',
     @Query('offset') offset = '0',
@@ -104,17 +111,71 @@ export class DocumentsController {
     return data;
   }
 
-  @UseGuards(MockUserGuard)
   @Get(':id')
+  @UseGuards(MockUserGuard)
   async getOne(@Param('id') id: string, @CurrentUserId() userId?: string) {
     const doc = await this.documentsService.getDocumentById(id);
     if (!doc) {
       throw new NotFoundException('Document not found');
     }
-    // enforce ownership
     if (doc.userId !== userId) {
-      throw new NotFoundException('Document not found'); // hide existence to other users
+      throw new NotFoundException('Document not found');
     }
     return doc;
+  }
+
+  // GET /documents/:id/download
+  @Get(':id/download')
+  @UseGuards(MockUserGuard)
+  async download(
+    @Param('id') id: string,
+    @CurrentUserId() userId: string,
+    @Res() res: Response,
+  ) {
+    // 1. buscar o documento via DocumentsService (reuso)
+    const doc = await this.documentsService.getDocumentById(id);
+    if (!doc) throw new NotFoundException('Document not found');
+
+    // ownership check (mock)
+    if (doc.userId !== userId) {
+      throw new ForbiddenException('You do not own this document');
+    }
+
+    // 2. buscar OCR (service retorna include ocrResult if implemented)
+    // if documentsService.getDocumentById included ocrResult, use it:
+    const extractedText = doc.ocrResult?.extractedText ?? '(no OCR text available)';
+
+    // 3. preparar paths
+    const fullPath = path.join(process.cwd(), doc.storagePath);
+    if (!fs.existsSync(fullPath)) {
+      throw new NotFoundException('Stored file missing from disk');
+    }
+
+    // 4. criar stream ZIP e enviar
+    res.set({
+      'Content-Type': 'application/zip',
+      'Content-Disposition': `attachment; filename="document-${id}.zip"`,
+    });
+
+    const archive = archiver('zip', { zlib: { level: 9 } });
+    archive.on('error', (err) => {
+      // se houver erro enquanto arquiva, garante fechar a resposta
+      if (!res.headersSent) {
+        res.status(500).send({ error: 'Failed to create zip' });
+      } else {
+        res.end();
+      }
+    });
+
+    archive.pipe(res);
+
+    // adicionar arquivo original com o nome original (mantendo extensão)
+    archive.file(fullPath, { name: `original${path.extname(doc.originalName)}` });
+
+    // adicionar texto OCR como txt virtual
+    archive.append(extractedText, { name: 'extracted.txt' });
+
+    // finalizar ZIP (returns a promise-like)
+    await archive.finalize();
   }
 }
