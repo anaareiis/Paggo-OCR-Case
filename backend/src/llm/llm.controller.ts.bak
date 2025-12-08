@@ -2,7 +2,7 @@
 import { Controller, Post, Param, Body, UseGuards, BadRequestException } from '@nestjs/common';
 import { LlmService } from './llm.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
-import { CurrentUserId } from '../auth/auth.decorator';
+import { CurrentUserId } from '../auth/current-user.decorator';
 
 @Controller('documents')
 export class LlmController {

@@ -22,7 +22,7 @@ import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { DocumentsService } from './documents.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
-import { CurrentUserId } from '../auth/auth.decorator';
+import { CurrentUserId } from '../auth/current-user.decorator';
 import * as fs from 'fs';
 import * as path from 'path';
 import archiver from 'archiver';
@@ -96,7 +96,7 @@ export class DocumentsController {
     };
   }
 
-  // ---- Protected endpoints: require x-user-id header (JwtAuthGuard) ----
+  // ---- Protected endpoints: require x-user-id header (MockUserGuard) ----
 
   @Get()
   @UseGuards(JwtAuthGuard)

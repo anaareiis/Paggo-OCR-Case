@@ -7,7 +7,7 @@ import { JwtAuthGuard } from '../auth/jwt.guard';
 
 @Module({
   imports: [DatabaseModule],
-  providers: [LlmService, ],
+  providers: [LlmService, MockUserGuard],
   controllers: [LlmController],
 })
 export class LlmModule {}

@@ -2,7 +2,7 @@
 import { Controller, Post, Param, UseGuards } from '@nestjs/common';
 import { OcrService } from './ocr.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
-import { CurrentUserId } from '../auth/auth.decorator';
+import { CurrentUserId } from '../auth/current-user.decorator';
 
 @Controller('documents')
 export class OcrController {

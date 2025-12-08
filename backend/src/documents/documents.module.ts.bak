@@ -8,6 +8,6 @@ import { JwtAuthGuard } from '../auth/jwt.guard';
 @Module({
   imports: [DatabaseModule],
   controllers: [DocumentsController],
-  providers: [DocumentsService, ],
+  providers: [DocumentsService, MockUserGuard],
 })
 export class DocumentsModule {}
