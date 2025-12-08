@@ -1,83 +1,94 @@
 # Paggo OCR Case
 
-This project was developed as part of a technical assessment.  
-The goal is to build an application that allows users to:
-
-- Upload documents (e.g., invoices or billing files)
-- Extract text through OCR processing
-- View previously submitted documents and their extracted text
-- Request contextual explanations using an LLM
-- Download the file with the extracted text appended
-
-The system is composed of:
-
-- **Frontend (Next.js)**
-- **Backend (NestJS)**
-- **Database layer using Prisma ORM**
+A full-stack document processing system built for a technical assessment.  
+The platform allows users to upload files, extract text using OCR, ask contextual questions to an LLM, and download processed results — all behind authenticated routes.
 
 ---
 
-## 🚀 Technologies
+## 🚀 Features
+
+- Upload documents (images or PDFs)  
+- OCR text extraction (Tesseract.js)  
+- LLM contextual explanations (OpenAI API or mock mode)  
+- Document preview + text viewer  
+- ZIP download (original file + extracted text)  
+- JWT authentication (backend) + secure session cookie (frontend)  
+- PostgreSQL database managed with Prisma ORM  
+- GitHub Actions CI for both frontend and backend  
+
+---
+
+## 🧱 Tech Stack
 
 ### **Frontend**
 - Next.js (App Router)
 - React
 - TypeScript
+- Cookie-based authentication
 
 ### **Backend**
 - NestJS
 - Prisma ORM
-- Multer (file upload)
-- OCR Engine (Tesseract or external API)
-- LLM Integration (OpenAI API or similar)
+- Multer (file uploads)
+- Tesseract.js OCR
+- OpenAI API integration (optional / fallback mock)
+- JWT auth with guards and strategies
 
 ### **Infrastructure**
-- PostgreSQL (local or via Docker)
-- Docker (optional)
+- PostgreSQL
 - Node.js 18+
+- Docker Compose
+- CI pipelines (GitHub Actions)
 
 ---
 
-## 📁 Project Structure
+# 📁 Project Structure
+
 ```
 paggo-ocr-case/
 ├── frontend/
-│   ├── app/
-│   ├── components/
-│   ├── lib/
-│   ├── public/
-│   ├── package.json
-│   └── README.md
+│    ├── pages/
+│    │    ├── api/
+│    │    │   ├── login.ts
+│    │    │   ├── logout.ts
+│    │    │   └── proxy-explain.ts
+│    │    ├── documents/
+│    │    │       ├── [id].tsx
+│    │    │       └── index.tsx
+│    │    └── login.tsx 
+│    ├── public/
+│    ├── package.json
+│    └── README.md
 │
 ├── backend/
 │   ├── src/
 │   │   ├── auth/
 │   │   ├── documents/
 │   │   ├── ocr/
-│   │   ├── app.controller.spec.ts 
-│   │   ├── app.controller.ts
-│   │   ├── app.module.ts
-│   │   ├── app.service.ts
-│   │   ├── main.ts
+│   │   ├── llm/
+│   │   ├── prisma.service.ts
 │   │   ├── prisma.module.ts
-│   │   └── prisma.service.ts
+│   │   ├── app.module.ts
+│   │   └── main.ts
 │   ├── prisma/
 │   │   └── schema.prisma
 │   ├── .env.example
 │   ├── package.json
-│   ├── README.md
-│   ├── tsconfig.json
+│   └── tsconfig.json
 │
-├── .gitignore
+├── .github/workflows/
+│   ├── backend-ci.yml
+│   └── frontend-ci.yml
+│
 ├── docker-compose.yml
 └── README.md
 ```
+
 ---
 
-# 🛠️ Setup & Execution
+# 🛠️ Running the Project Locally
 
-## 1️⃣ Clone the Repository
-
+## 1️⃣ Clone the repository
 ```bash
 git clone <REPO_URL>
 cd paggo-ocr-case
@@ -85,7 +96,40 @@ cd paggo-ocr-case
 
 ---
 
-## 2️⃣ Frontend Setup (Next.js)
+# ⚙️ Backend Setup (NestJS + Prisma)
+
+```bash
+cd backend
+npm install
+```
+
+### Required environment variables (`backend/.env`)
+```ini
+DATABASE_URL="postgresql://pguser:pgpass@localhost:5432/paggo"
+PORT=3001
+JWT_SECRET="change-me"
+JWT_EXPIRES_IN="15m"
+OPENAI_API_KEY=""        # Optional — empty string enables mock mode
+BCRYPT_ROUNDS=10
+```
+
+### Run Prisma migrations
+```bash
+npx prisma generate
+npx prisma migrate dev --name init
+```
+
+### Start the backend
+```bash
+npm run dev
+```
+
+Backend runs on:  
+👉 http://localhost:3001
+
+---
+
+# 💻 Frontend Setup (Next.js)
 
 ```bash
 cd frontend
@@ -93,119 +137,134 @@ npm install
 npm run dev
 ```
 
-Application available at:  
+Frontend runs on:  
 👉 http://localhost:3000
 
+### Required environment variables (`frontend/.env.local`)
+```ini
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_AUTH_COOKIE_NAME=paggo_token
+```
+
 ---
 
-## 3️⃣ Backend Setup (NestJS)
+# 🗄️ Database & Prisma
 
+### Open Prisma Studio
 ```bash
 cd backend
-npm install
+npx prisma studio
 ```
 
-### Create your `.env` file:
-
-```
-DATABASE_URL="postgresql://paggo:paggo@localhost:5432/paggo?schema=public"
-PORT=3001
-JWT_SECRET="change-me"
-OPENAI_API_KEY=""
-
-```
-
-### Run Prisma
-
+### Run migrations in production
 ```bash
-npx prisma generate
-npx prisma migrate dev --name init
+npx prisma migrate deploy
 ```
-
-### Start the Backend Server
-
-```bash
-npm run start:dev
-```
-
-API available at:  
-👉 http://localhost:3001
 
 ---
 
-# 📡 Planned API Endpoints
+# 📡 API Endpoints Overview
 
-### Upload & OCR
-```
-POST /upload
-```
-
-### List all documents
-```
-GET /documents
+### Authentication
+```http
+POST /auth/register
+POST /auth/login
 ```
 
-### Get specific document
-```
-GET /documents/:id
-```
-
-### Request LLM explanation
-```
+### Documents
+```http
+POST /documents/upload
+GET  /documents
+GET  /documents/:id
+GET  /documents/:id/download
 POST /documents/:id/explain
 ```
 
-### Download file with appended text
+---
+
+# 🔐 Authentication Flow
+
+1. User logs in through `/auth/login`.
+2. Backend returns a JWT.
+3. Frontend stores it in an **HTTP-only cookie**.
+4. All authenticated routes include:
+
 ```
-GET /documents/:id/download
+Authorization: Bearer <token>
+```
+
+Errors:
+- **401 Unauthorized** → token missing or invalid  
+- **403 Forbidden** → user tries to access another user's document  
+
+---
+
+# ✔️ Project Status
+
+## Backend
+- Complete Prisma schema  
+- Working auth (JWT + guards)  
+- Document upload, list, details, download  
+- OCR service with Tesseract  
+- LLM explanation endpoint  
+- ZIP export  
+- CI pipeline for lint + build  
+
+## Frontend
+- Login page  
+- Upload page  
+- Documents list and detail view  
+- OCR text viewer  
+- LLM explanation UI  
+- Download button  
+- Cookie-based session handling  
+- Fully integrated with backend  
+
+---
+
+# 🚀 Deployment Guide
+
+## Deploy Backend (Render / Heroku)
+
+### Build:
+```bash
+npm ci
+npm run build
+```
+
+### Start:
+```bash
+npm run start
+```
+
+### Required env vars:
+```
+DATABASE_URL
+JWT_SECRET
+JWT_EXPIRES_IN
+OPENAI_API_KEY
+PORT
+BCRYPT_ROUNDS
 ```
 
 ---
 
-# 🔐 Authentication
+## Deploy Frontend (Vercel)
 
-Possible strategies:
+**Root directory:** `frontend/`  
+**Build command:** `npm run build`  
+**Output directory:** `.next`  
 
-- NextAuth (Frontend) + JWT (Backend)
-- Simplified mock user (demo purposes)
-
-Example:
-
-```ts
-@UseGuards(AuthGuard)
+### Required env vars:
 ```
-
----
-
-# ✔️ Current Project Status
-
-- [x] Frontend structure created  
-- [x] Backend structure created  
-- [x] Prisma initialized  
-- [x] Initial README added  
-- [ ] Database modeling  
-- [ ] OCR service  
-- [ ] File upload endpoint  
-- [ ] LLM integration  
-- [ ] Document listing & history  
-- [ ] Frontend screens  
-
----
-
-# 📌 Next Recommended Steps
-
-1. Finalize `schema.prisma` models  
-2. Implement `PrismaService`  
-3. Implement file upload (Multer)  
-4. Integrate OCR  
-5. Build CRUD endpoints  
-6. Add LLM explanation endpoint  
-7. Build UI (upload, list, detail)  
-8. Add authentication  
+NEXT_PUBLIC_API_URL=<your backend URL>
+NEXT_PUBLIC_AUTH_COOKIE_NAME=paggo_token
+```
 
 ---
 
 # 👩‍💻 Author
 
-This project was developed exclusively for the Paggo technical assessment.  
-Feedback and improvements are welcome.
+This project was developed as part of the **Paggo Technical Assessment**.  
+Feedback and contributions are welcome!
+

@@ -60,16 +60,21 @@ Expected response:
 ---
 
 ## 📁 Project Structure
-
-src/
- ├── app.module.ts
- ├── app.controller.ts
- ├── prisma.service.ts      (PrismaClient wrapper for Prisma v7)
- ├── database.module.ts     (Global provider for PrismaService)
- └── ...
-prisma/
- ├── schema.prisma
- └── generated/             (Generated Prisma Client)
+backend/
+   ├── src/
+   │   ├── auth/
+   │   ├── documents/
+   │   ├── ocr/
+   │   ├── llm/
+   │   ├── prisma.service.ts
+   │   ├── prisma.module.ts
+   │   ├── app.module.ts
+   │   └── main.ts
+   ├── prisma/
+   │   └── schema.prisma
+   ├── .env.example
+   ├── package.json
+   └── tsconfig.json
 
 ---
 
