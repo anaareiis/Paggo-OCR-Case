@@ -1,0 +1,33 @@
+# Node
+/node_modules
+**/node_modules
+
+# Backend build artifacts
+backend/dist/
+backend/generated/
+
+# Accidental frontend artifact
+frontend/backend/
+
+# Next / Frontend artifacts
+frontend/.next
+.next
+
+# Env files
+*.env
+backend/.env
+frontend/.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Prisma local DB (if any)
+prisma/dev.db
+backend/prisma/dev.db
+
+# Misc
+*.log
+**/.DS_Store
+.vscode/
+.idea/
