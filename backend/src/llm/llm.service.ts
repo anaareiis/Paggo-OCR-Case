@@ -34,15 +34,26 @@ export class LlmService {
 
     const messages = [{ role: 'system', content: system }, { role: 'user', content: user }];
 
-    const resp = await axios.post(
-      this.openaiUrl,
-      { model: this.model, messages, temperature: 0.0, max_tokens: 1000 },
-      { headers: { Authorization: `Bearer ${this.openaiKey}`, 'Content-Type': 'application/json' }, timeout: 60000 },
-    );
+    try {
+      const resp = await axios.post(
+        this.openaiUrl,
+        { model: this.model, messages, temperature: 0.0, max_tokens: 1000 },
+        { headers: { Authorization: `Bearer ${this.openaiKey}`, 'Content-Type': 'application/json' }, timeout: 60000 },
+      );
 
-    const choice = resp.data?.choices?.[0];
-    const answer = choice?.message?.content ?? choice?.text ?? '';
-    return { provider: 'openai', answer: (answer || '').trim(), raw: resp.data };
+      const choice = resp.data?.choices?.[0];
+      const answer = choice?.message?.content ?? choice?.text ?? '';
+      return { provider: 'openai', answer: (answer || '').trim(), raw: resp.data };
+    } catch (err: any) {
+      const apiError = err.response?.data?.error;
+      const reason = apiError?.message || err.message || 'unknown error';
+      this.logger.error(`OpenAI request failed: ${reason}`);
+      return {
+        provider: 'openai-error',
+        answer: `⚠️ Could not reach OpenAI: ${reason}`,
+        raw: apiError ?? null,
+      };
+    }
   }
 
   /**
