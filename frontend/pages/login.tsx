@@ -1,16 +1,15 @@
-// frontend/pages/login.tsx
 import { useState } from 'react';
 import Router from 'next/router';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [err, setErr] = useState<string | null>(null);
+  const [email, setEmail] = useState('ana@test.local');
+  const [password, setPassword] = useState('secret123');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    setErr(null);
+    setError(null);
     setLoading(true);
     try {
       const res = await fetch('/api/login', {
@@ -18,36 +17,51 @@ export default function LoginPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
-      const data = await res.json();
+
+      const payload = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setErr(data.message || JSON.stringify(data));
+        setError(payload?.message || 'Login failed');
         setLoading(false);
         return;
       }
-      // login success — cookie was set by API route
+
       Router.push('/documents');
-    } catch (e: any) {
-      setErr(e.message);
+    } catch (err: any) {
+      setError(err?.message || 'Network error');
     } finally {
       setLoading(false);
     }
   }
 
   return (
-    <div style={{ maxWidth: 520, margin: '4rem auto', padding: 20 }}>
-      <h1>Login</h1>
-      <form onSubmit={submit}>
-        <div style={{ marginBottom: 8 }}>
-          <label>Email</label><br />
-          <input value={email} onChange={e => setEmail(e.target.value)} type="email" required style={{ width: '100%' }} />
-        </div>
-        <div style={{ marginBottom: 12 }}>
-          <label>Password</label><br />
-          <input value={password} onChange={e => setPassword(e.target.value)} type="password" required style={{ width: '100%' }} />
-        </div>
-        <button disabled={loading} type="submit">{loading ? 'Logging in...' : 'Login'}</button>
-        {err && <div style={{ color: 'crimson', marginTop: 12 }}>{err}</div>}
-      </form>
+    <div className="auth-wrapper">
+      <div className="auth-card" role="main" aria-labelledby="signin-title">
+        <h1 id="signin-title" className="title">Sign in</h1>
+        <p className="subtitle">Access your documents</p>
+
+        <form onSubmit={submit} className="stack">
+          {error && <div className="text-red-600" role="alert">{error}</div>}
+
+          <div>
+            <label className="text-muted" htmlFor="email">Email</label>
+            <input id="email" type="email" value={email} onChange={(e)=>setEmail(e.target.value)} required className="form-input" />
+          </div>
+
+          <div>
+            <label className="text-muted" htmlFor="password">Password</label>
+            <input id="password" type="password" value={password} onChange={(e)=>setPassword(e.target.value)} required className="form-input" />
+          </div>
+
+          <div style={{ display: 'flex', justifyContent: 'flex-start', gap: 12, alignItems: 'center' }}>
+            <button type="submit" disabled={loading} className="btn-primary">
+              {loading ? 'Signing...' : 'Sign in'}
+            </button>
+            <button type="button" className="btn ghost" onClick={() => { setEmail(''); setPassword(''); }}>
+              Clear
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

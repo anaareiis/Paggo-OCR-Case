@@ -15,29 +15,16 @@ frontend/
 │    ├── api/
 │    │   ├── login.ts
 │    │   ├── logout.ts
+│    │   ├── refresh-documents.ts
 │    │   └── proxy-explain.ts
 │    ├── documents/
 │    │       ├── [id].tsx
 │    │       └── index.tsx
+│    ├── upload.tsx
 │    └── login.tsx 
-├── public/
+├── package-lock.json
 ├── package.json
 └── README.md
-
-frontend/
-  pages/
-    api/
-      login.ts
-      logout.ts
-      proxy-explain.ts
-    documents/
-      index.tsx
-      [id].tsx
-    login.tsx
-  public/
-  .env.local
-  next.config.js
-  package.json
 
 ## 🔧 Variáveis de Ambiente
 Crie um arquivo `.env.local` na raiz:
