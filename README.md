@@ -96,6 +96,22 @@ cd paggo-ocr-case
 
 ---
 
+## 2️⃣ Database
+
+Using Docker:
+```bash
+docker compose up -d
+```
+
+Or, against a local PostgreSQL install:
+```bash
+sudo -u postgres psql -c "CREATE USER pguser WITH PASSWORD 'pgpass'; CREATE DATABASE paggo OWNER pguser;"
+```
+
+Either way, match the credentials to `DATABASE_URL` in `backend/.env` below.
+
+---
+
 # ⚙️ Backend Setup (NestJS + Prisma)
 
 ```bash
@@ -111,6 +127,7 @@ JWT_SECRET="change-me"
 JWT_EXPIRES_IN="15m"
 OPENAI_API_KEY=""        # Optional — empty string enables mock mode
 BCRYPT_ROUNDS=10
+FRONTEND_URL="http://localhost:3000"   # used for CORS
 ```
 
 ### Run Prisma migrations
