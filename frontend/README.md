@@ -11,6 +11,20 @@ Este é o frontend do projeto Paggo OCR Case, desenvolvido em Next.js (Pages Rou
 
 ## 📂 Estrutura do Projeto
 frontend/
+├── pages/
+│    ├── api/
+│    │   ├── login.ts
+│    │   ├── logout.ts
+│    │   └── proxy-explain.ts
+│    ├── documents/
+│    │       ├── [id].tsx
+│    │       └── index.tsx
+│    └── login.tsx 
+├── public/
+├── package.json
+└── README.md
+
+frontend/
   pages/
     api/
       login.ts
