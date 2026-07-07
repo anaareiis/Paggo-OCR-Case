@@ -25,6 +25,7 @@
     "@nestjs/platform-express": "^11.0.1",
     "@prisma/adapter-pg": "^7.1.0",
     "@prisma/client": "^7.1.0",
+    "axios": "^1.13.2",
     "multer": "^2.0.2",
     "node-tesseract-ocr": "^2.2.1",
     "reflect-metadata": "^0.2.2",

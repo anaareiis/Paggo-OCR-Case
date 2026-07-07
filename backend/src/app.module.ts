@@ -5,10 +5,12 @@ import { AppService } from './app.service';
 import { DatabaseModule } from './prisma.module';
 import { DocumentsModule } from './documents/documents.module'; 
 import { OcrModule } from './ocr/ocr.module';
+import { LlmModule } from './llm/llm.module';
 
 @Module({
-  imports: [DatabaseModule, DocumentsModule, OcrModule],
+  imports: [DatabaseModule, DocumentsModule, OcrModule, LlmModule],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule {}
+

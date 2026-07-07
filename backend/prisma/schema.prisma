@@ -6,6 +6,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  // In Prisma v7 the connection URL is configured in prisma.config.ts (not in the schema)
 }
 
 //
@@ -18,11 +19,11 @@ model User {
   id         String      @id @default(uuid())
   email      String      @unique
   name       String?
-  password   String?     // opcional por enquanto (Issue 8)
+  password   String?     // optional for now (Issue 8)
   createdAt  DateTime    @default(now())
 
   documents  Document[]
-  llmHistory LLMInteraction[]
+  llmHistory LLMInteraction[]  @relation("UserLLMHistory")
 }
 
 //
@@ -40,10 +41,12 @@ model Document {
   createdAt     DateTime     @default(now())
 
   userId        String
-  user          User         @relation(fields: [userId], references: [id])
+  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   ocrResult     OCRResult?
-  llmHistory    LLMInteraction[]
+  llmHistory    LLMInteraction[] @relation("DocumentLLMHistory")
+
+  @@index([userId])
 }
 
 //
@@ -56,10 +59,10 @@ model OCRResult {
   id            String     @id @default(uuid())
   documentId    String     @unique
   extractedText String
-  ocrMeta       Json?      // pode guardar confiança, idioma detectado, etc.
+  ocrMeta       Json?      // can store confidence, detected language, timings, etc.
   extractedAt   DateTime   @default(now())
 
-  document      Document   @relation(fields: [documentId], references: [id])
+  document      Document   @relation(fields: [documentId], references: [id], onDelete: Cascade)
 }
 
 //
@@ -69,15 +72,21 @@ model OCRResult {
 //
 
 model LLMInteraction {
-  id         String    @id @default(uuid())
-  userId     String?
-  documentId String?
+  id          String   @id @default(uuid())
+  userId      String? 
+  documentId  String?
 
-  prompt     String
-  response   String
-  meta       Json?
-  createdAt  DateTime  @default(now())
+  // fields aligned with the backend code (question/answer/rawResponse/provider)
+  question    String
+  answer      String
+  provider    String?    // e.g. "openai" or "mock"
+  rawResponse Json?      // raw response or metadata from the provider (JSON)
 
-  user       User?     @relation(fields: [userId], references: [id])
-  document   Document? @relation(fields: [documentId], references: [id])
+  createdAt   DateTime   @default(now())
+
+  user        User?      @relation("UserLLMHistory", fields: [userId], references: [id], onDelete: Cascade)
+  document    Document?  @relation("DocumentLLMHistory", fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([documentId])
 }
