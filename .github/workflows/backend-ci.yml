@@ -13,7 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        # Prisma 7 requires Node 20.19+/22.12+/24+; 18.x always fails EBADENGINE.
+        node-version: [22.x]
 
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +30,10 @@ jobs:
 
       - name: Generate Prisma client
         working-directory: backend
+        # prisma.config.ts requires DATABASE_URL to be set to load, even though
+        # `generate` never connects to a database.
+        env:
+          DATABASE_URL: "postgresql://user:password@localhost:5432/db"
         run: npm run prisma:generate
 
       - name: Build
