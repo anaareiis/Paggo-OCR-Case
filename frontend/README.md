@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Paggo OCR Case — Frontend (Next.js)
 
-## Getting Started
+Este é o frontend do projeto Paggo OCR Case, desenvolvido em Next.js (Pages Router) com autenticação JWT via cookies HTTP-only, upload de arquivos, listagem de documentos, visualização de OCR e integração com LLM.
 
-First, run the development server:
+## 🚀 Tecnologias
+- Next.js 14 (Pages Router)
+- React 18
+- TypeScript
+- HTTP-only cookies para autenticação segura
+- API Routes para proxiar chamadas ao backend
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 📂 Estrutura do Projeto
+frontend/
+  pages/
+    api/
+      login.ts
+      logout.ts
+      proxy-explain.ts
+    documents/
+      index.tsx
+      [id].tsx
+    login.tsx
+  public/
+  .env.local
+  next.config.js
+  package.json
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🔧 Variáveis de Ambiente
+Crie um arquivo `.env.local` na raiz:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+NEXT_PUBLIC_API_URL=http://localhost:3001
+NEXT_PUBLIC_AUTH_COOKIE_NAME=paggo_token
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🛠 Instalação
+npm install
 
-## Learn More
+## ▶️ Rodar localmente
+npm run dev  
+Acesse http://localhost:3000
 
-To learn more about Next.js, take a look at the following resources:
+## 🔐 Autenticação JWT
+Fluxo:
+1. Usuário envia email/senha para `/api/login`
+2. Backend retorna JWT
+3. Cookie HTTP-only é criado
+4. SSR usa esse cookie nas páginas protegidas
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📄 Páginas
+### /login
+Tela de login.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### /documents
+Lista documentos do usuário autenticado.
 
-## Deploy on Vercel
+### /documents/[id]
+Mostra:
+- Preview do arquivo
+- Texto OCR
+- Chat LLM
+- Botão de download (ZIP com OCR + original)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 📡 Comunicação com Backend
+Todas as requests usam automaticamente:
+Authorization: Bearer <token>
+Mas o token nunca fica visível no JavaScript — é lido via cookie HTTP-only.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 📦 Scripts
+npm run dev     → Desenvolvimento  
+npm run build   → Build produção  
+npm start       → Servir build  
+npm run lint    → ESLint  
+
+## 🧪 Testes
+### Login via CURL
+curl -X POST http://localhost:3000/api/login \
+  -H "Content-Type: application/json" \
+  -d '{"email":"ana@test.local","password":"secret123"}'
+
+### Acessar documentos
+http://localhost:3000/documents
+
+## 🚀 Deploy
+### Vercel
+Basta rodar:
+vercel deploy
+
+Configuração recomendada:
+- Certificar que NEXT_PUBLIC_API_URL aponte para o backend em produção
+- Cookies com `secure: true`
+
+## ✔️ Funcionalidades Concluídas
+- Autenticação JWT (cookies HTTP-only)
+- Login/logout
+- Upload integrado ao backend
+- Lista de documentos
+- Página de detalhes com OCR
+- Integração com LLM
+- Download ZIP
+
+## 📄 Licença
+MIT © 2025

@@ -7,7 +7,7 @@ import { JwtAuthGuard } from '../auth/jwt.guard';
 
 @Module({
   imports: [DatabaseModule],
-  providers: [OcrService, ],
+  providers: [OcrService, MockUserGuard],
   controllers: [OcrController],
 })
 export class OcrModule {}

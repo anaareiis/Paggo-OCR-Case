@@ -1,0 +1,12 @@
+// backend/src/auth/current-user.decorator.ts
+import { createParamDecorator, ExecutionContext } from '@nestjs/common';
+
+/**
+ * Use: @CurrentUserId() userId: string
+ * Works with JwtStrategy validate() that returns { userId, email }
+ */
+export const CurrentUserId = createParamDecorator((data: unknown, ctx: ExecutionContext) => {
+  const req = ctx.switchToHttp().getRequest();
+  // When using JwtStrategy validate -> req.user = { userId, email }
+  return req.user?.userId;
+});
