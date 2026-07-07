@@ -7,23 +7,78 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
+
+//
+// ────────────────────────────────────────────────────────────
+// USER
+// ────────────────────────────────────────────────────────────
+//
 
 model User {
-  id        String    @id @default(uuid())
-  email     String    @unique
-  name      String?
-  createdAt DateTime  @default(now())
-  documents Document[]
+  id         String      @id @default(uuid())
+  email      String      @unique
+  name       String?
+  password   String?     // opcional por enquanto (Issue 8)
+  createdAt  DateTime    @default(now())
+
+  documents  Document[]
+  llmHistory LLMInteraction[]
 }
 
+//
+// ────────────────────────────────────────────────────────────
+// DOCUMENT
+// ────────────────────────────────────────────────────────────
+//
+
 model Document {
-  id         String   @id @default(uuid())
-  filename   String
-  path       String
-  text       String?
-  createdAt  DateTime @default(now())
-  userId     String
-  user       User     @relation(fields: [userId], references: [id])
+  id            String       @id @default(uuid())
+  originalName  String
+  storagePath   String       // uploads/<uuid>.pdf|png|jpg
+  mimeType      String
+  size          Int
+  createdAt     DateTime     @default(now())
+
+  userId        String
+  user          User         @relation(fields: [userId], references: [id])
+
+  ocrResult     OCRResult?
+  llmHistory    LLMInteraction[]
+}
+
+//
+// ────────────────────────────────────────────────────────────
+// OCR RESULT
+// ────────────────────────────────────────────────────────────
+//
+
+model OCRResult {
+  id            String     @id @default(uuid())
+  documentId    String     @unique
+  extractedText String
+  ocrMeta       Json?      // pode guardar confiança, idioma detectado, etc.
+  extractedAt   DateTime   @default(now())
+
+  document      Document   @relation(fields: [documentId], references: [id])
+}
+
+//
+// ────────────────────────────────────────────────────────────
+// LLM INTERACTIONS
+// ────────────────────────────────────────────────────────────
+//
+
+model LLMInteraction {
+  id         String    @id @default(uuid())
+  userId     String?
+  documentId String?
+
+  prompt     String
+  response   String
+  meta       Json?
+  createdAt  DateTime  @default(now())
+
+  user       User?     @relation(fields: [userId], references: [id])
+  document   Document? @relation(fields: [documentId], references: [id])
 }
