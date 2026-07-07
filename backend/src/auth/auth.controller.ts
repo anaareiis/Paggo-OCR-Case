@@ -1,6 +1,8 @@
 // backend/src/auth/auth.controller.ts
-import { Controller, Post, Body, BadRequestException } from '@nestjs/common';
+import { Controller, Post, Get, Body, BadRequestException, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
+import { JwtAuthGuard } from './jwt.guard';
+import { CurrentUserId } from './auth.decorator';
 
 class RegisterDto {
   email: string;
@@ -27,5 +29,11 @@ export class AuthController {
     const { email, password } = body;
     if (!email || !password) throw new BadRequestException('email and password are required');
     return this.auth.login(email, password);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async me(@CurrentUserId() userId: string) {
+    return { userId };
   }
 }

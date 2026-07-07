@@ -1,6 +1,7 @@
 import { GetServerSideProps } from 'next';
 import { parse } from 'cookie';
 import { useState } from 'react';
+import Link from 'next/link';
 import Button from '../../components/Button';
 import Card from '../../components/Card';
 import Spinner from '../../components/Spinner';
@@ -8,13 +9,26 @@ import Spinner from '../../components/Spinner';
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const COOKIE_NAME = process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'paggo_token';
 
+function formatBytes(bytes: number) {
+  if (!bytes) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)));
+  return `${(bytes / Math.pow(1024, i)).toFixed(i ? 1 : 0)} ${units[i]}`;
+}
+
 export default function DocumentDetail({ doc, error }: any) {
   const [question, setQuestion] = useState('');
-  const [answer, setAnswer] = useState<string|null>(null);
+  const [answer, setAnswer] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const previewUrl = `${API}/${doc.storagePath}`;
+  const previewUrl = `${API}/${doc?.storagePath}`;
 
-  if (error) return <div className="text-red-600">{error}</div>;
+  if (error) {
+    return (
+      <div className="max-w-2xl mx-auto mt-10">
+        <Card className="border-red-200 bg-red-50 text-red-700">{error}</Card>
+      </div>
+    );
+  }
 
   async function ask() {
     if (!question) return;
@@ -23,51 +37,87 @@ export default function DocumentDetail({ doc, error }: any) {
     try {
       const resp = await fetch(`/api/proxy-explain?documentId=${doc.id}`, {
         method: 'POST',
-        headers: {'Content-Type':'application/json'},
-        body: JSON.stringify({ question })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question }),
       });
       const j = await resp.json();
       if (!resp.ok) throw new Error(j.message || 'Error');
       setAnswer(j.answer || 'No answer');
-    } catch (err:any) {
+    } catch (err: any) {
       setAnswer('Error: ' + err.message);
-    } finally { setLoading(false); }
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
-      <div className="flex items-start gap-6">
-        <div style={{flex:1}}>
-          <Card>
-            <div className="text-lg font-semibold mb-2">{doc.originalName}</div>
+    <div className="max-w-5xl mx-auto space-y-6 pb-16">
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <Link href="/documents" className="text-sm text-[var(--muted)] hover:text-[var(--accent)]">
+            ← Back to documents
+          </Link>
+          <h1 className="text-2xl font-semibold mt-1 break-all">{doc.originalName}</h1>
+          <p className="text-sm text-[var(--muted)] mt-1">
+            {doc.mimeType} · {formatBytes(doc.size)} · uploaded {new Date(doc.createdAt).toLocaleString()}
+          </p>
+        </div>
+        <a href={`/api/download?documentId=${doc.id}`} className="shrink-0">
+          <Button variant="ghost">Download ZIP</Button>
+        </a>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-start">
+        <div className="md:col-span-3">
+          <Card className="!p-0 overflow-hidden">
             {doc.mimeType?.startsWith('image/') ? (
-              <img src={previewUrl} alt="preview" className="w-full object-contain rounded" />
+              <img src={previewUrl} alt="preview" className="w-full object-contain" />
             ) : (
-              <iframe src={previewUrl} className="w-full h-96 border rounded" />
+              <iframe src={previewUrl} className="w-full h-[520px] border-0" title="document preview" />
             )}
           </Card>
         </div>
 
-        <aside style={{width:360}}>
+        <div className="md:col-span-2">
           <Card>
-            <div className="text-sm text-gray-500 mb-2">OCR Text</div>
-            <div className="ocr-block max-h-72 overflow-auto bg-gray-50 p-3 rounded">{doc.ocrResult?.extractedText ?? '(no OCR)'}</div>
-            <div className="mt-4">
-              <a href={`/api/download?documentId=${doc.id}`}><Button variant="ghost">Download ZIP</Button></a>
+            <div className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)] mb-3">
+              Extracted text (OCR)
+            </div>
+            <div className="max-h-[420px] overflow-auto whitespace-pre-wrap text-sm leading-relaxed bg-[var(--bg)] border border-[var(--border)] rounded-lg p-3">
+              {doc.ocrResult?.extractedText || 'No OCR text available for this document.'}
             </div>
           </Card>
-        </aside>
+        </div>
       </div>
 
       <Card>
-        <div className="mb-3">
-          <label className="block text-sm font-medium">Ask about this document</label>
-          <textarea value={question} onChange={(e)=>setQuestion(e.target.value)} rows={3} className="w-full p-2 border rounded" />
+        <div className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)] mb-3">
+          Ask about this document
         </div>
-        <div className="flex items-center gap-2">
-          <Button onClick={ask} disabled={loading}>{loading ? <><Spinner size={14}/> Asking...</> : 'Ask LLM'}</Button>
-          {answer && <div className="ml-4 p-3 bg-yellow-50 rounded w-full"><strong>Answer</strong><div className="mt-2">{answer}</div></div>}
+        <textarea
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          rows={3}
+          placeholder="e.g. What is the total amount on this invoice?"
+          className="form-input"
+        />
+        <div className="flex items-center gap-3 mt-3">
+          <Button variant="primary" onClick={ask} disabled={loading || !question}>
+            {loading ? (
+              <span className="inline-flex items-center gap-2">
+                <Spinner size={14} /> Asking...
+              </span>
+            ) : (
+              'Ask LLM'
+            )}
+          </Button>
         </div>
+        {answer && (
+          <div className="mt-4 p-4 rounded-lg bg-amber-50 border border-amber-200 text-sm">
+            <div className="font-semibold text-amber-900 mb-1">Answer</div>
+            <div className="text-amber-900 whitespace-pre-wrap">{answer}</div>
+          </div>
+        )}
       </Card>
     </div>
   );
