@@ -29,6 +29,7 @@
     "@prisma/client": "^7.1.0",
     "archiver": "^7.0.1",
     "axios": "^1.13.2",
+    "dotenv": "^17.4.2",
     "bcrypt": "^6.0.0",
     "multer": "^2.0.2",
     "node-tesseract-ocr": "^2.2.1",

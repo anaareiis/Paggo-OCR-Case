@@ -1,10 +1,12 @@
 import { useRef, useState } from 'react';
+import { GetServerSideProps } from 'next';
+import { parse } from 'cookie';
 import Button from '../components/Button';
 import FileDropzone from '../components/FileDropzone';
 import Spinner from '../components/Spinner';
 import Router from 'next/router';
 
-const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const COOKIE_NAME = process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'paggo_token';
 
 export default function UploadPage() {
   const [file, setFile] = useState<File|null>(null);
@@ -24,13 +26,14 @@ export default function UploadPage() {
     const fd = new FormData();
     fd.append('file', file);
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `${API}/documents/upload`, true);
+    xhr.open('POST', '/api/upload', true);
     xhr.upload.onprogress = (ev) => {
       if (ev.lengthComputable) setProgress(Math.round(100 * ev.loaded / ev.total));
     };
     xhr.onload = function() {
       setLoading(false);
       if (xhr.status >= 200 && xhr.status < 300) Router.push('/documents');
+      else if (xhr.status === 401) { setError('Session expired, please log in again'); Router.push('/login'); }
       else setError('Upload failed');
     };
     xhr.onerror = () => { setLoading(false); setError('Network error'); };
@@ -66,3 +69,10 @@ export default function UploadPage() {
     </div>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async (ctx) => {
+  const cookies = parse(ctx.req.headers.cookie || '');
+  const token = cookies[COOKIE_NAME];
+  if (!token) return { redirect: { destination: '/login', permanent: false } };
+  return { props: {} };
+};

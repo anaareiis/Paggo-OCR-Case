@@ -1,4 +1,5 @@
 // backend/src/main.ts
+import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 
@@ -7,7 +8,7 @@ async function bootstrap() {
 
   // Permite chamadas do frontend em dev
   app.enableCors({
-    origin: 'http://localhost:3001', 
+    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
     credentials: true,
   });
 

@@ -21,6 +21,7 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { DocumentsService } from './documents.service';
+import { OcrService } from '../ocr/ocr.service';
 import { JwtAuthGuard } from '../auth/jwt.guard';
 import { CurrentUserId } from '../auth/auth.decorator';
 import * as fs from 'fs';
@@ -38,11 +39,14 @@ const ALLOWED_MIMES = [
 
 @Controller('documents')
 export class DocumentsController {
-  constructor(private readonly documentsService: DocumentsService) {}
+  constructor(
+    private readonly documentsService: DocumentsService,
+    private readonly ocrService: OcrService,
+  ) {}
 
-  // upload stays public (optionally you can protect it too)
   @Post('upload')
   @HttpCode(HttpStatus.CREATED)
+  @UseGuards(JwtAuthGuard)
   @UseInterceptors(
     FileInterceptor('file', {
       limits: { fileSize: 15 * 1024 * 1024 }, // 15MB
@@ -73,7 +77,7 @@ export class DocumentsController {
   )
   async uploadFile(
     @UploadedFile() file: Express.Multer.File,
-    @Body('userId') userId?: string,
+    @CurrentUserId() userId: string,
   ) {
     if (!file) {
       throw new BadRequestException('File is required');
@@ -84,8 +88,12 @@ export class DocumentsController {
       storagePath,
       mimeType: file.mimetype,
       size: file.size,
-      userId: userId || null,
+      userId,
     });
+
+    // Run OCR synchronously so the document is immediately searchable/explainable.
+    const ocr = await this.ocrService.runOcrForDocument(record.id);
+
     return {
       id: record.id,
       originalName: record.originalName,
@@ -93,6 +101,7 @@ export class DocumentsController {
       mimeType: record.mimeType,
       size: record.size,
       createdAt: record.createdAt,
+      ocr: { status: ocr.status, extractedText: 'extractedText' in ocr ? ocr.extractedText : undefined },
     };
   }
 
