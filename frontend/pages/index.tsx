@@ -13,7 +13,7 @@ export default function Home() {
 
         <div style={{ marginTop: 28, display: 'flex', justifyContent: 'center', gap: 12 }}>
           <Link href="/login" className="btn btn-primary">Login</Link>
-          <Link href="/register" className="btn btn.ghost">Register</Link>
+          <Link href="/register" className="btn ghost">Register</Link>
         </div>
 
         <div style={{ marginTop: 40, display: 'flex', gap: 24, justifyContent: 'center', flexWrap: 'wrap' }}>

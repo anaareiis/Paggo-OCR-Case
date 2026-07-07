@@ -1,9 +1,9 @@
 import { GetServerSideProps } from 'next';
 import { parse } from 'cookie';
 import { useState } from 'react';
-import Button from '../components/Button';
-import Card from '../components/Card';
-import Spinner from '../components/Spinner';
+import Button from '../../components/Button';
+import Card from '../../components/Card';
+import Spinner from '../../components/Spinner';
 
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const COOKIE_NAME = process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'paggo_token';
@@ -53,7 +53,7 @@ export default function DocumentDetail({ doc, error }: any) {
             <div className="text-sm text-gray-500 mb-2">OCR Text</div>
             <div className="ocr-block max-h-72 overflow-auto bg-gray-50 p-3 rounded">{doc.ocrResult?.extractedText ?? '(no OCR)'}</div>
             <div className="mt-4">
-              <a href={`${API}/documents/${doc.id}/download`}><Button variant="ghost">Download ZIP</Button></a>
+              <a href={`/api/download?documentId=${doc.id}`}><Button variant="ghost">Download ZIP</Button></a>
             </div>
           </Card>
         </aside>

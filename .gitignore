@@ -26,6 +26,10 @@ frontend/.env
 prisma/dev.db
 backend/prisma/dev.db
 
+# User-uploaded documents (may contain personal/sensitive data)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
 # Misc
 *.log
 **/.DS_Store

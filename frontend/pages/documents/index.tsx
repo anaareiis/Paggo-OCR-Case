@@ -33,7 +33,7 @@ export default function DocumentsPage({ data, error }: any) {
             </div>
             <div style={{ display:'flex', gap:8 }}>
             <Link href={`/documents/${d.id}`} className="btn">Open</Link>
-            <a href={`${API}/documents/${d.id}/download`} className="btn btn.ghost">Download</a>
+            <a href={`/api/download?documentId=${d.id}`} className="btn ghost">Download</a>
             </div>
         </Card>
         ))}
