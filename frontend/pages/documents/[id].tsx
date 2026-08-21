@@ -157,8 +157,12 @@ export default function DocumentDetail({ doc: initialDoc, error }: any) {
             </div>
             <div className="max-h-[420px] overflow-auto whitespace-pre-wrap font-mono text-sm leading-relaxed bg-[var(--bg)] border border-[var(--border)] rounded-lg p-3">
               {isOcrPending(doc) ? (
-                <span className="inline-flex items-center gap-2 not-italic font-sans text-[var(--muted)]">
-                  <Spinner size={14} /> Processing OCR... this can take a while on the free hosting tier.
+                <span className="inline-flex items-start gap-2 not-italic font-sans text-[var(--muted)]">
+                  <Spinner size={14} />
+                  <span>
+                    Processing OCR... PDFs can take several minutes on this free hosting tier (image
+                    uploads are much faster). This page checks automatically — no need to reload.
+                  </span>
                 </span>
               ) : (
                 doc.ocrResult?.extractedText || 'No OCR text available for this document.'

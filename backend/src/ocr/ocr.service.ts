@@ -57,29 +57,18 @@ export class OcrService {
       durationsMs: {},
     };
 
-    // persist a "pending" OCRResult entry or update existing one
-    // we'll create a placeholder with extractedText = '' and meta.status = 'pending'
+    // The "pending" placeholder is already created by initPendingResult()
+    // before this runs; just make sure it's there (covers callers that skip
+    // that step) via upsert, which is safe to call whether or not it exists.
     let ocrRecord;
     try {
-      ocrRecord = await this.prisma.prisma.oCRResult.create({
-        data: {
-          documentId: documentId,
-          extractedText: '',
-          ocrMeta: meta,
-        },
+      ocrRecord = await this.prisma.prisma.oCRResult.upsert({
+        where: { documentId },
+        update: { extractedText: '', ocrMeta: meta, extractedAt: new Date() },
+        create: { documentId, extractedText: '', ocrMeta: meta },
       });
-    } catch (err) {
-      // if unique constraint (already exists), update instead
-      this.logger.warn('Could not create initial OCRResult placeholder, trying update. ' + String(err));
-      try {
-        ocrRecord = await this.prisma.prisma.oCRResult.upsert({
-          where: { documentId },
-          update: { extractedText: '', ocrMeta: meta, extractedAt: new Date() },
-          create: { documentId, extractedText: '', ocrMeta: meta },
-        });
-      } catch (e) {
-        this.logger.error('Failed to upsert OCRResult placeholder: ' + String(e));
-      }
+    } catch (e) {
+      this.logger.error('Failed to upsert OCRResult placeholder: ' + String(e));
     }
 
     const startAll = Date.now();

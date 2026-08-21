@@ -10,6 +10,8 @@ The platform allows users to upload files, extract text using OCR, ask contextua
 
 The backend runs on Render's free tier, so the first request after a period of inactivity may take up to a minute to spin back up.
 
+> **Known limitation:** OCR on the free tier is CPU/memory constrained. Image uploads (JPEG/PNG) process reliably in a few seconds; PDF uploads run `pdftoppm` + Tesseract on shared, throttled CPU and can take several minutes or occasionally fail to complete. OCR runs asynchronously (the upload response is immediate; the document page polls for the result), so this doesn't block the app — but for a fast, reliable demo, prefer uploading an image. A paid Render plan with dedicated CPU would resolve this.
+
 ---
 
 ## 🚀 Features
