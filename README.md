@@ -3,6 +3,13 @@
 A full-stack document processing system built for a technical assessment.  
 The platform allows users to upload files, extract text using OCR, ask contextual questions to an LLM, and download processed results — all behind authenticated routes.
 
+## 🌐 Live Demo
+
+- Frontend: https://paggo-ocr-case-nu.vercel.app
+- Backend API: https://paggo-ocr-backend-gr4t.onrender.com
+
+The backend runs on Render's free tier, so the first request after a period of inactivity may take up to a minute to spin back up.
+
 ---
 
 ## 🚀 Features
@@ -240,6 +247,8 @@ Errors:
 ---
 
 # 🚀 Deployment Guide
+
+Currently deployed as: backend on Render, frontend on Vercel (see [Live Demo](#-live-demo) above).
 
 ## Deploy Backend (Render / Heroku)
 
