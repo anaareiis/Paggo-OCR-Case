@@ -16,6 +16,7 @@ import {
   UseGuards,
   Res,
   ForbiddenException,
+  Logger,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { diskStorage } from 'multer';
@@ -40,6 +41,8 @@ const ALLOWED_MIMES = [
 
 @Controller('documents')
 export class DocumentsController {
+  private readonly logger = new Logger(DocumentsController.name);
+
   constructor(
     private readonly documentsService: DocumentsService,
     private readonly ocrService: OcrService,
@@ -92,8 +95,13 @@ export class DocumentsController {
       userId,
     });
 
-    // Run OCR synchronously so the document is immediately searchable/explainable.
-    const ocr = await this.ocrService.runOcrForDocument(record.id);
+    // Create the "pending" placeholder synchronously, then run the (potentially
+    // slow) OCR pipeline in the background so the upload response isn't blocked
+    // on it. The frontend polls GET /documents/:id until ocrResult is ready.
+    await this.ocrService.initPendingResult(record.id);
+    this.ocrService.runOcrForDocument(record.id).catch((err) => {
+      this.logger.error(`Background OCR failed for document ${record.id}: ${err}`);
+    });
 
     return {
       id: record.id,
@@ -102,7 +110,7 @@ export class DocumentsController {
       mimeType: record.mimeType,
       size: record.size,
       createdAt: record.createdAt,
-      ocr: { status: ocr.status, extractedText: 'extractedText' in ocr ? ocr.extractedText : undefined },
+      ocr: { status: 'pending' },
     };
   }
 

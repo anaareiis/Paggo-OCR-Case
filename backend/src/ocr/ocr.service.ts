@@ -14,6 +14,25 @@ export class OcrService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
+   * Create the "pending" OCRResult placeholder synchronously, before the
+   * (potentially slow) OCR pipeline runs. Lets the upload response return
+   * immediately while the frontend polls for the final result.
+   */
+  async initPendingResult(documentId: string) {
+    const meta = { status: 'pending', startedAt: new Date().toISOString() };
+    try {
+      return await this.prisma.prisma.oCRResult.upsert({
+        where: { documentId },
+        update: { extractedText: '', ocrMeta: meta, extractedAt: new Date() },
+        create: { documentId, extractedText: '', ocrMeta: meta },
+      });
+    } catch (err) {
+      this.logger.warn('Could not init pending OCRResult: ' + String(err));
+      return null;
+    }
+  }
+
+  /**
    * Run OCR for a document (by documentId).
    * Returns object { status, extractedText, meta }.
    */

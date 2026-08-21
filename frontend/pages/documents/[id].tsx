@@ -1,6 +1,6 @@
 import { GetServerSideProps } from 'next';
 import { parse } from 'cookie';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Button from '../../components/Button';
@@ -17,14 +17,34 @@ function formatBytes(bytes: number) {
   return `${(bytes / Math.pow(1024, i)).toFixed(i ? 1 : 0)} ${units[i]}`;
 }
 
-export default function DocumentDetail({ doc, error }: any) {
+function isOcrPending(d: any) {
+  return !d?.ocrResult || d.ocrResult.ocrMeta?.status === 'pending';
+}
+
+export default function DocumentDetail({ doc: initialDoc, error }: any) {
   const router = useRouter();
+  const [doc, setDoc] = useState(initialDoc);
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const previewUrl = `${API}/${doc?.storagePath}`;
+
+  useEffect(() => {
+    if (!doc || !isOcrPending(doc)) return;
+    const interval = setInterval(async () => {
+      try {
+        const resp = await fetch(`/api/document-status?documentId=${doc.id}`);
+        if (!resp.ok) return;
+        const updated = await resp.json();
+        setDoc(updated);
+      } catch {
+        // ignore transient errors, keep polling
+      }
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [doc]);
 
   if (error) {
     return (
@@ -136,7 +156,13 @@ export default function DocumentDetail({ doc, error }: any) {
               Extracted text (OCR)
             </div>
             <div className="max-h-[420px] overflow-auto whitespace-pre-wrap font-mono text-sm leading-relaxed bg-[var(--bg)] border border-[var(--border)] rounded-lg p-3">
-              {doc.ocrResult?.extractedText || 'No OCR text available for this document.'}
+              {isOcrPending(doc) ? (
+                <span className="inline-flex items-center gap-2 not-italic font-sans text-[var(--muted)]">
+                  <Spinner size={14} /> Processing OCR... this can take a while on the free hosting tier.
+                </span>
+              ) : (
+                doc.ocrResult?.extractedText || 'No OCR text available for this document.'
+              )}
             </div>
           </Card>
         </div>
