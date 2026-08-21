@@ -2,6 +2,8 @@
 import Link from 'next/link';
 import { GetServerSideProps } from 'next';
 import { parse } from 'cookie';
+import { useState } from 'react';
+import { useRouter } from 'next/router';
 import AppShell from '../../components/AppShell';
 import Card from '../../components/Card';
 
@@ -9,12 +11,31 @@ const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 const COOKIE_NAME = process.env.NEXT_PUBLIC_AUTH_COOKIE_NAME || 'paggo_token';
 
 export default function DocumentsPage({ data, error }: any) {
+  const router = useRouter();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   if (error) {
     return (
     <div style={{ maxWidth: 800, margin: '48px auto' }}>
         <p style={{ color: 'red' }}>{error}</p>
     </div>
     );
+  }
+
+  async function handleDelete(id: string, name: string) {
+    if (!window.confirm(`Delete "${name}"? This cannot be undone.`)) return;
+    setDeletingId(id);
+    try {
+      const resp = await fetch(`/api/delete-document?documentId=${id}`, { method: 'DELETE' });
+      if (!resp.ok) {
+        const j = await resp.json().catch(() => ({}));
+        throw new Error(j.message || 'Failed to delete document');
+      }
+      router.replace(router.asPath);
+    } catch (err: any) {
+      alert('Error: ' + err.message);
+      setDeletingId(null);
+    }
   }
 
   return (
@@ -34,6 +55,14 @@ export default function DocumentsPage({ data, error }: any) {
             <div style={{ display:'flex', gap:8 }}>
             <Link href={`/documents/${d.id}`} className="btn">Open</Link>
             <a href={`/api/download?documentId=${d.id}`} className="btn ghost">Download</a>
+            <button
+              className="btn"
+              style={{ background: '#dc2626', color: '#fff', borderColor: '#dc2626' }}
+              onClick={() => handleDelete(d.id, d.originalName)}
+              disabled={deletingId === d.id}
+            >
+              {deletingId === d.id ? 'Deleting...' : 'Delete'}
+            </button>
             </div>
         </Card>
         ))}

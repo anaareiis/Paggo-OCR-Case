@@ -9,6 +9,7 @@ import {
   HttpCode,
   HttpStatus,
   Get,
+  Delete,
   Query,
   Param,
   NotFoundException,
@@ -131,6 +132,20 @@ export class DocumentsController {
       throw new NotFoundException('Document not found');
     }
     return doc;
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  async remove(@Param('id') id: string, @CurrentUserId() userId: string) {
+    const doc = await this.documentsService.getDocumentById(id);
+    if (!doc) {
+      throw new NotFoundException('Document not found');
+    }
+    if (doc.userId !== userId) {
+      throw new ForbiddenException('You do not own this document');
+    }
+    await this.documentsService.deleteDocument(id);
   }
 
   // GET /documents/:id/download

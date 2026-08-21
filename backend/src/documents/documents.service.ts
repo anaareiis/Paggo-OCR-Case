@@ -89,4 +89,18 @@ export class DocumentsService {
       return doc;
     }
 
+    async deleteDocument(id: string) {
+      const doc = await this.prisma.prisma.document.findUnique({ where: { id } });
+      if (!doc) return null;
+
+      const fullPath = path.join(process.cwd(), doc.storagePath);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+
+      // OCRResult and LLMInteraction rows are removed via onDelete: Cascade
+      await this.prisma.prisma.document.delete({ where: { id } });
+      return doc;
+    }
+
 }

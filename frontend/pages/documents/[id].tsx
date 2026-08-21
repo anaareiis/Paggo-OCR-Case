@@ -1,6 +1,7 @@
 import { GetServerSideProps } from 'next';
 import { parse } from 'cookie';
 import { useState } from 'react';
+import { useRouter } from 'next/router';
 import Link from 'next/link';
 import Button from '../../components/Button';
 import Card from '../../components/Card';
@@ -17,9 +18,12 @@ function formatBytes(bytes: number) {
 }
 
 export default function DocumentDetail({ doc, error }: any) {
+  const router = useRouter();
   const [question, setQuestion] = useState('');
   const [answer, setAnswer] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const previewUrl = `${API}/${doc?.storagePath}`;
 
   if (error) {
@@ -28,6 +32,43 @@ export default function DocumentDetail({ doc, error }: any) {
         <Card className="border-red-200 bg-red-50 text-red-700">{error}</Card>
       </div>
     );
+  }
+
+  async function handleDelete() {
+    if (!window.confirm(`Delete "${doc.originalName}"? This cannot be undone.`)) return;
+    setDeleting(true);
+    try {
+      const resp = await fetch(`/api/delete-document?documentId=${doc.id}`, { method: 'DELETE' });
+      if (!resp.ok) {
+        const j = await resp.json().catch(() => ({}));
+        throw new Error(j.message || 'Failed to delete document');
+      }
+      router.push('/documents');
+    } catch (err: any) {
+      alert('Error: ' + err.message);
+      setDeleting(false);
+    }
+  }
+
+  async function handleDownload() {
+    setDownloading(true);
+    try {
+      const resp = await fetch(`/api/download?documentId=${doc.id}`);
+      if (!resp.ok) throw new Error('Failed to download document');
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `document-${doc.id}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err: any) {
+      alert('Error: ' + err.message);
+    } finally {
+      setDownloading(false);
+    }
   }
 
   async function ask() {
@@ -62,9 +103,20 @@ export default function DocumentDetail({ doc, error }: any) {
             {doc.mimeType} · {formatBytes(doc.size)} · uploaded {new Date(doc.createdAt).toLocaleString()}
           </p>
         </div>
-        <a href={`/api/download?documentId=${doc.id}`} className="shrink-0">
-          <Button variant="ghost">Download ZIP</Button>
-        </a>
+        <div className="shrink-0 flex items-center gap-2">
+          <Button variant="ghost" onClick={handleDownload} disabled={downloading}>
+            {downloading ? (
+              <span className="inline-flex items-center gap-2">
+                <Spinner size={14} /> Downloading...
+              </span>
+            ) : (
+              'Download ZIP'
+            )}
+          </Button>
+          <Button variant="danger" onClick={handleDelete} disabled={deleting}>
+            {deleting ? 'Deleting...' : 'Delete'}
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-5 gap-6 items-start">
@@ -83,7 +135,7 @@ export default function DocumentDetail({ doc, error }: any) {
             <div className="text-xs font-semibold uppercase tracking-wide text-[var(--muted)] mb-3">
               Extracted text (OCR)
             </div>
-            <div className="max-h-[420px] overflow-auto whitespace-pre-wrap text-sm leading-relaxed bg-[var(--bg)] border border-[var(--border)] rounded-lg p-3">
+            <div className="max-h-[420px] overflow-auto whitespace-pre-wrap font-mono text-sm leading-relaxed bg-[var(--bg)] border border-[var(--border)] rounded-lg p-3">
               {doc.ocrResult?.extractedText || 'No OCR text available for this document.'}
             </div>
           </Card>
