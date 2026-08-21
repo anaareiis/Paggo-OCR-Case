@@ -79,7 +79,7 @@ export class OcrService {
         const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), `ocr-${documentId}-`));
         const outPrefix = path.join(tmpDir, 'page');
         // -png will output page-1.png, page-2.png ...
-        const cmd = `pdftoppm -png -r 300 "${absolutePath}" "${outPrefix}"`;
+        const cmd = `pdftoppm -png -r 150 "${absolutePath}" "${outPrefix}"`;
         this.logger.log(`Converting PDF to images: ${cmd}`);
         execSync(cmd, { stdio: 'ignore' });
         // collect generated PNG files
