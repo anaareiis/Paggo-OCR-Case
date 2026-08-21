@@ -1,9 +1,10 @@
 import { useState } from 'react';
+import Link from 'next/link';
 import Router from 'next/router';
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('ana@test.local');
-  const [password, setPassword] = useState('secret123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,6 +62,11 @@ export default function LoginPage() {
             </button>
           </div>
         </form>
+
+        <div style={{ marginTop: 14, fontSize: 13 }}>
+          Don&apos;t have an account?
+          <Link href="/register" className="text-muted">Create one</Link>
+        </div>
       </div>
     </div>
   );

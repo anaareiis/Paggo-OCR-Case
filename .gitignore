@@ -15,6 +15,7 @@ frontend/.next
 
 # Env files
 *.env
+.env.db
 backend/.env
 frontend/.env
 .env.local
